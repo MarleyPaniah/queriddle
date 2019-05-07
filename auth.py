@@ -8,8 +8,9 @@ from sqlalchemy.orm import sessionmaker
 from tabledef import Utilisateur, RaphMail,Matiere, hasher
 engine = create_engine('sqlite:///base.db', echo=True)
 
-app = Flask(__name__)
 
+app = Flask(__name__)
+app.secret_key = os.urandom(12)
 @app.route('/')
 def home():
     if not session.get('logged_in'):
@@ -94,5 +95,5 @@ def logout():
     return redirect(url_for('home'))
 
 if __name__ == "__main__":
-    app.secret_key = os.urandom(12)
+
     app.run(debug=True,host='0.0.0.0', port=4000)

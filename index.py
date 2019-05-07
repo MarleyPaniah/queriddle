@@ -2,14 +2,14 @@
 # -*- coding:utf-8 -*-
 
 from flask import Flask, request, redirect, \
-    url_for, flash, render_template, make_response, session
+    url_for, flash, render_template, session
 from flask_mail import Mail, Message
 import os
 from random import choice
 from string import ascii_lowercase
 from sqlalchemy import *
 from sqlalchemy.orm import sessionmaker
-from tabledef import Matiere, User, create_engine,Fichier, Utilisateur, RaphMail
+from tabledef import Matiere, create_engine,Fichier, Utilisateur, RaphMail, hasher
 
 #Création base données
 engine = create_engine('sqlite:///base.db', echo=True)
@@ -34,13 +34,14 @@ def do_admin_login():
     if request.method == 'POST':
         POST_USERNAME = str(request.form['username'])
         POST_PASSWORD = str(request.form['password'])
+        password_hash = hasher(POST_PASSWORD)
         #Session sqlalchemy
         Session = sessionmaker(bind=engine)
         s = Session()
         #Requêtes SQL à la table users
-        query = s.query(User).filter(User.username.in_([POST_USERNAME]), User.password.in_([POST_PASSWORD]))
-        result = query.first()
-        if result:
+        query = s.query(Utilisateur).filter(Utilisateur.username.in_([POST_USERNAME]),
+                                            Utilisateur.password.in_([password_hash]))
+        if query.first():
             session['logged_in'] = True
         else:
             flash("L'identifiant ou le mot de passe est incorrect")
@@ -76,7 +77,7 @@ def new_account():
                       recipients=[request.form['email']],
                       body="Bienvenue sur Queriddle ! Suis ce lien pour créer ton compte : http://127.0.0.1:5000/create_account/"+key)
         mail.send(msg)
-        # Stockage des données
+        #Stockage des données
         user2 = RaphMail(key_email=str(key), email=str(request.form['email']))
         s.add(user2)
         s.commit()
@@ -92,7 +93,7 @@ def create_account(key):
         Session = sessionmaker(bind=engine)
         s = Session()
         #Check si l'utilisateur existe déjà
-        query = s.query(User.username).filter(User.username.in_([request.form['username']]))
+        query = s.query(Utilisateur.username).filter(Utilisateur.username.in_([request.form['username']]))
         if query.first():
             flash("Ce nom d'utilisateur existe déjà !")
             return redirect(url_for('create_account'))
