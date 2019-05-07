@@ -5,7 +5,7 @@ from random import choice
 from string import ascii_lowercase
 from sqlalchemy import *
 from sqlalchemy.orm import sessionmaker
-from tabledef import Utilisateur, RaphMail,Matiere
+from tabledef import Utilisateur, RaphMail,Matiere, hasher
 engine = create_engine('sqlite:///base.db', echo=True)
 
 app = Flask(__name__)
@@ -22,10 +22,11 @@ def do_admin_login():
     if request.method == 'POST':
         POST_USERNAME = str(request.form['username'])
         POST_PASSWORD = str(request.form['password'])
+        password_hash=hasher(POST_PASSWORD)
 
         Session = sessionmaker(bind=engine)
         s = Session()
-        query = s.query(Utilisateur).filter(Utilisateur.username.in_([POST_USERNAME]), Utilisateur.password.in_([POST_PASSWORD]))
+        query = s.query(Utilisateur).filter(Utilisateur.username.in_([POST_USERNAME]), Utilisateur.password.in_([password_hash]))
         result = query.first()
         if result:
             session['logged_in'] = True

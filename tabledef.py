@@ -9,6 +9,15 @@ import datetime
 engine = create_engine('sqlite:///base.db', echo=True)
 Base = declarative_base()
 
+def hasher(mystring):
+    hash_object = hashlib.md5(mystring.encode())
+    return hash_object.hexdigest()
+
+def is_password(mystring, hashed):
+    hash_object = hashlib.md5(mystring.encode())
+    if hash_object.hexdigest()==hashed:
+        return True
+    return False
 
 class Utilisateur(Base):
 
@@ -19,15 +28,10 @@ class Utilisateur(Base):
     password = Column(String)
     status= Column(String)
     
-class User(Base):
-
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True)
-    username = Column(String)
-    password = Column(String)
-
-
+    def __init__(self, email,username,password):
+        self.email=email
+        self.username=username
+        self.password=hasher(password)
 
 class Matiere(Base):
     __tablename__="matieres"
