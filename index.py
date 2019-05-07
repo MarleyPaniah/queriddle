@@ -15,6 +15,7 @@ from tabledef import Matiere, User, create_engine,Fichier, Utilisateur, RaphMail
 engine = create_engine('sqlite:///base.db', echo=True)
 
 app = Flask(__name__)
+app.secret_key = os.urandom(12)
 
 '''ROOT : Page Racine qui redirige vers login si non connecté, et vers ressources (resources)
 sinon'''
@@ -36,7 +37,7 @@ def do_admin_login():
         #Session sqlalchemy
         Session = sessionmaker(bind=engine)
         s = Session()
-        #Requêtes à la table users de la classe User de tabledef
+        #Requêtes SQL à la table users
         query = s.query(User).filter(User.username.in_([POST_USERNAME]), User.password.in_([POST_PASSWORD]))
         result = query.first()
         if result:
@@ -73,7 +74,7 @@ def new_account():
         msg = Message(subject="Mail de confirmation - Queriddle",
                       sender=app.config.get("MAIL_USERNAME"),
                       recipients=[request.form['email']],
-                      body="Bienvenue sur Queriddle ! Suis ce lien pour créer ton compte : http://0.0.0.0:4000/create_account/"+key)
+                      body="Bienvenue sur Queriddle ! Suis ce lien pour créer ton compte : http://127.0.0.1:5000/create_account/"+key)
         mail.send(msg)
         # Stockage des données
         user2 = RaphMail(key_email=str(key), email=str(request.form['email']))
@@ -104,7 +105,7 @@ def create_account(key):
         s.add(user)
         s.commit()
         return redirect(url_for('do_admin_login'))
-    return render_template('create_account.html')
+    return render_template('create_account.html', key = key)
 
 '''RESOURCES : Accès à la page des ressources. Cette page affichera le pdf 
 décrivant Queriddle'''
@@ -154,9 +155,9 @@ def matiere(num_annee, matiere):
         fichierList=[]
         Session = sessionmaker(bind=engine)
         s = Session()
-        #SELECT nomFichier FROM Fichier,Matiere 
+        #SELECT nomFichier FROM Fichier,Matiere
         #WHERE Matiere.id= Fichier.idMatiere AND Matiere.nomMat=matiere
-        query=s.query(Fichier.nomFichier).join(Matiere).filter(Matiere.id=Fichier.idMatiere).filter(Matiere.nomMat=matiere).all()
+        query=s.query(Fichier.nomFichier).join(Matiere).filter(Matiere.id==Fichier.idMatiere).filter(Matiere.nomMat==matiere).all()
         for row in query:
             matiereList.add(row.nomFichier)
     return render_template('matiere.html',fichierList=fichierList)
@@ -174,9 +175,7 @@ def logout():
 
 
 
-
-
 if __name__ == "__main__":
-    app.secret_ket = os.urandom(12)
+
     app.run(debug=True)
 
