@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 
 from flask import Flask, request, redirect, \
-    url_for, flash, render_template, session
+    url_for, flash, render_template, session, abort
 from flask_mail import Mail, Message
 import os
 from random import choice
@@ -48,6 +48,7 @@ def do_admin_login():
         return redirect(url_for('index'))
     return render_template('login.html')
 
+
 '''NEW_ACCOUNT : Autorisation pour créer un nouveau compte si l'adresse mail 
 est validée'''
 @app.route('/new_account', methods=['GET','POST'])
@@ -81,8 +82,9 @@ def new_account():
         user2 = RaphMail(key_email=str(key), email=str(request.form['email']))
         s.add(user2)
         s.commit()
-        return render_template('login.html')
+        return redirect(url_for('mail_sent', envoi='mail_envoye'))
     return render_template('new_account.html')
+
 
 '''CREATE_ACCOUNT : Une fois son adresse INSA confirmée, l'utilisateur va pouvoir choisir son pseudo 
 et son mot de passe'''
@@ -108,6 +110,7 @@ def create_account(key):
         return redirect(url_for('do_admin_login'))
     return render_template('create_account.html', key = key)
 
+
 '''RESOURCES : Accès à la page des ressources. Cette page affichera le pdf 
 décrivant Queriddle'''
 @app.route('/resources/')
@@ -125,6 +128,7 @@ def resources():
         for row in query:
             anneeList.add(row.annee)
     return render_template('resources.html',anneeList=anneeList)
+
 
 '''RES.../NUM_ANNEE : En sélectionnant l'année dans le menu déroulant, la page 
 recharge'''
@@ -163,16 +167,34 @@ def matiere(num_annee, matiere):
             matiereList.add(row.nomFichier)
     return render_template('matiere.html',fichierList=fichierList)
 
+
 '''MY ACCOUNT : Accès à son espace personnel, d'où on pourra changer pseudo et mdp'''
 @app.route('/myaccount/')
 def myaccount():
     return render_template('myaccount.html')
+
+'''MAIL ENVOYE : Page sur laquelle on arrive après que l'e-mail de confirmation
+ait été envoyé'''
+@app.route('/mail_sent/<string:envoi>')
+def mail_sent(envoi='non_envoye'):
+    if envoi == 'mail_envoye' :
+        return render_template('mail_sent.html') #TODO: template plus joli aussi
+    else:
+        return abort(404)
+
 
 '''LOG_OUT : Déconnexion de l'utilisateur'''
 @app.route("/logout")
 def logout():
     session['logged_in'] = False
     return redirect(url_for('index'))
+
+#------------GESTION DES PAGES D'ERREUR------------------------
+
+@app.errorhandler(404)
+def page_404(error):
+    return "Nous ne sommes pas parvenus à trouver votre page", 404 #TODO: 404.html avec un lien vers index
+
 
 
 
