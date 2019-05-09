@@ -193,7 +193,7 @@ def logout():
 
 @app.errorhandler(404)
 def page_404(error):
-    return "Nous ne sommes pas parvenus à trouver votre page", 404 #TODO: 404.html avec un lien vers index
+    return "Nous ne sommes pas parvenus à trouver votre page", 404 #TODO: temp 404.html avec un lien vers index
 
 
 
